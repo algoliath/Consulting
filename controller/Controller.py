@@ -1,7 +1,7 @@
 import time
 import datetime
-import main.googleAPI.util.FilterUtil as Filter
-import main.googleAPI.util.MapUtil as Map
+import util.FilterUtil as Filters
+import util.MapUtil as Mapping
 
 GOOGLE_ACCOUNT = '2016123304@yonsei.ac.kr'
 
@@ -17,31 +17,28 @@ LOG_FILE_NAME = 'Time Log'
 
 
 # helper function to match parameter map to the template requirements
-def adapt_helper(read_file, param_map, adaptors):
+def read_helper(prop_map, dto_map, adaptors):
     # update time log data
     try:
-        for read_id in param_map.keys():
+        for read_id in dto_map.keys():
             for adaptor in adaptors:
-                if adaptor.supports(param_map[read_id]):
-                    adaptor.handle(read_id, read_file[read_id], param_map[read_id])
-        return param_map
+                adaptor.handle(read_id, prop_map[read_id], dto_map[read_id])
+        return dto_map
     except Exception as error:
         print(f'batch_read_update:{error}')
         raise error
 
 
 # helper function to convert parameter map into template form
-def convert_helper(sheets, property_map, param_map, converters, chart_update_mode, trigger_update_range):
+def write_helper(sheets, property_map, param_map, converters, chart_update_mode, trigger_update_range):
     # update stats data
     write_file = property_map.keys()
     key = ''
     val = ''
-    table_info = {}
     chart_info = {}
     try:
         for sid in write_file:
             title = property_map[sid].get('name')
-            print(f'title={title}')
             for converter in converters:
                 if converter.support(title):
                     info = converter.convert(param_map)
@@ -50,16 +47,16 @@ def convert_helper(sheets, property_map, param_map, converters, chart_update_mod
                     elif len(info) == 5:
                         table, table_format, chart_format, key, val = info
                     # map table update information
-                    table_info = Map.convert_to_map(table=table,
-                                                    table_format=table_format,
-                                                    n_col=table[0][:1],
-                                                    trigger_update_range=trigger_update_range)
+                    table_info = Mapping.convert_to_map(table=table,
+                                                        table_format=table_format,
+                                                        n_col=table[0][:1],
+                                                        trigger_update_range=trigger_update_range)
                     # map chart update information
                     if key and val:
                         table_info['key'] = key
                         table_info['val'] = val
-                        chart_info = Map.convert_to_map(chart_format=chart_format,
-                                                        chart_update_mode=chart_update_mode)
+                        chart_info = Mapping.convert_to_map(chart_format=chart_format,
+                                                            chart_update_mode=chart_update_mode)
                     print(f'table = {table}')
                     print(f'table_info = {table_info}')
                     print(f'chart_info = {chart_info}')
@@ -92,39 +89,37 @@ class Controller:
             drive.create_file({'name': LOG_FILE_NAME + ' ' + CURRENT_DATE, 'mimeType': MIMETYPES[1],
                                'parents': log_dir})
 
-    def run_app(self):
+    def daemon_process(self):
         drive = self.drive
-        docs_id = []
-        sheets_id = []
+        doc_ids = []
+        sheet_ids = []
         time_end = 10000000
         try:
             for i in range(0, time_end):
                 # select mode
                 mode = 'batch' if i % 30 == 0 else 'trigger'
                 # get docs, sheets files id from the drive
-                docs_id = drive.read_files(QUERY_READ, MIMETYPES[0], mode)
-                sheets_id = drive.read_files(QUERY_WRITE, MIMETYPES[1], mode)
-                self.update(docs_id, sheets_id, drive, read_update_mode=mode, write_update_mode='update')
+                doc_ids = drive.read_files(QUERY_READ, MIMETYPES[0], mode)
+                sheet_ids = drive.read_files(QUERY_WRITE, MIMETYPES[1], mode)
+                self.update(doc_ids, sheet_ids, drive, read_update_mode=mode, write_update_mode='update')
                 time.sleep(20)
         except Exception as error:
             print(f'main_event:{error}')
         finally:
-            self.update(docs_id, sheets_id, drive, read_update_mode='batch', write_update_mode='delete')
+            self.update(doc_ids, sheet_ids, drive, read_update_mode='batch', write_update_mode='delete')
 
-    def update(self, docs_id, sheets_id, drive, read_update_mode, write_update_mode):
+    def update(self, doc_ids, sheet_ids, drive, read_update_mode, write_update_mode):
         docs = self.docs
         sheets = self.sheets
         update_range = []
         try:
-            read_file = drive.update_and_read_files(docs_id, read_update_mode, 'docs', 'webViewLink, modifiedTime')
-            write_file = drive.update_and_read_files(sheets_id, read_update_mode, 'sheets', 'name')
-            param_map = docs.update_param_map(docs_id)
-            print(f'param_map={param_map}')
-            param_map = adapt_helper(read_file, param_map, self.adaptors)
-            print(f'param_map={param_map}')
+            docs_id = drive.update_and_read_files(doc_ids, read_update_mode, params='docs, webViewLink, modifiedTime')
+            sheets_id = drive.update_and_read_files(sheet_ids, read_update_mode, params='sheets, name')
+            param_map = docs.update_param_map(doc_ids)
+            param_map = read_helper(docs_id, param_map, self.adaptors)
             if read_update_mode == 'trigger':
-                update_range = Filter.get_target_index(docs_id, param_map)
-            convert_helper(sheets, write_file, param_map, self.converters, write_update_mode, update_range)
+                update_range = Filters.get_target_index(doc_ids, param_map)
+            write_helper(sheets, sheets_id, param_map, self.converters, write_update_mode, update_range)
         except Exception as error:
             print(f'update:{error}')
             raise error

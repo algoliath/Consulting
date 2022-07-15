@@ -1,6 +1,6 @@
-from main.googleAPI.converter.Converter import Converter
-from main.googleAPI.request.request_form.sheet.table.StatsTableFormat import StatsTableFormat
-from main.googleAPI.request.request_form.sheet.chart.StatsChartFormat import StatsChartFormat
+from converter.interface.Converter import Converter
+from request.request_form.sheet.table.StatsTableFormat import StatsTableFormat
+from request.request_form.sheet.chart.StatsChartFormat import StatsChartFormat
 
 
 def build_stats_param(adaptor, param_map, key, val):

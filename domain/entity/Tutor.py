@@ -1,5 +1,3 @@
-from main.googleAPI.domain.entity.Person import Person
-
 
 class Tutor(Person):
 

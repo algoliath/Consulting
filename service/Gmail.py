@@ -1,7 +1,7 @@
 from googleapiclient.discovery import build
 from googleapiclient import errors
 from email.message import EmailMessage
-from main.googleAPI.auth.credentials import get_credentials
+from auth.credentials import get_credentials
 import base64
 
 SCOPES = ['https://mail.google.com/']

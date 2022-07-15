@@ -1,7 +1,7 @@
 from main.googleAPI.request.request_form.sheet.table.BasicTableFormat import BasicTableFormat
 
 
-class LogTableFormat(BasicTableFormat):
+class TimeLogFormat(BasicTableFormat):
 
     def __init__(self):
         pass
