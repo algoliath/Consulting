@@ -46,7 +46,7 @@ class StatsTableConverter(Converter):
             for v in columns:
                 item = ''
                 if v in values:
-                    item = values[v]
+                    item = v
                 row.append(item)
             table.append(row)
         table = [header] + table

@@ -1,7 +1,7 @@
 import time
 
-from selenium.webdriver.common.by import By
-from bs4 import BeautifulSoup
+# from selenium.webdriver.common.by import By
+# from bs4 import BeautifulSoup
 
 CONFIRM1 = "VfPpkd-dgl2Hf-ppHlrf-sM5MNb"
 CONFIRM2 = "VfPpkd-LgbsSe.VfPpkd-LgbsSe-OWXEXe-k8QpJ.VfPpkd-LgbsSe-OWXEXe-dgl2Hf.nCP5yc.AjY5Oe.DuMIQc.qfvgSe.qIypjc" \

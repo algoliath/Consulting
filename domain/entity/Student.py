@@ -1,10 +1,10 @@
-from main.googleAPI.domain.entity.Person import Person
+from domain.entity.Person import Person
 
 
 class Student(Person):
 
-    def __init__(self, pin, name, email, contact, package, grade):
-        super.__init__(pin, name, email)
+    def __init__(self, member_id, name, email, contact, package, grade):
+        super.__init__(member_id, name, email)
         self.contact = contact
         self.package = package
         self.grade = grade

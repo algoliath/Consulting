@@ -9,8 +9,8 @@ MIMETYPES = ['application/vnd.google-apps.document', 'application/vnd.google-app
              'application/vnd.google-apps.folder']
 
 CURRENT_DATE = str(datetime.datetime.now()).split(' ')[0]
-QUERY_READ = f"'{GOOGLE_ACCOUNT}' in writers and mimeType = '{MIMETYPES[0]}'"
-QUERY_WRITE = f"'{GOOGLE_ACCOUNT}' in writers and mimeType = '{MIMETYPES[1]}'"
+QUERY_DOCS = f"'{GOOGLE_ACCOUNT}' in writers and mimeType = '{MIMETYPES[0]}'"
+QUERY_SHEETS = f"'{GOOGLE_ACCOUNT}' in writers and mimeType = '{MIMETYPES[1]}'"
 QUERY_LOG_FILE = f"name contains 'Time Log {CURRENT_DATE}' and mimeType = '{MIMETYPES[1]}'"
 QUERY_LOG_FOLDER = f"name contains 'Time Log' and mimeType = '{MIMETYPES[2]}'"
 LOG_FILE_NAME = 'Time Log'
@@ -20,18 +20,16 @@ LOG_FILE_NAME = 'Time Log'
 def read_helper(prop_map, dto_map, adaptors):
     # update time log data
     try:
-        for read_id in dto_map.keys():
-            for adaptor in adaptors:
-                adaptor.handle(read_id, prop_map[read_id], dto_map[read_id])
+        for adaptor in adaptors:
+            adaptor.handle(dto_map, prop_map)
         return dto_map
     except Exception as error:
-        print(f'batch_read_update:{error}')
+        print(f'read_update:{error}')
         raise error
 
 
 # helper function to convert parameter map into template form
-def write_helper(sheets, property_map, param_map, converters, chart_update_mode, trigger_update_range):
-    # update stats data
+def write_helper(sheets, property_map, converters, chart_update_mode, trigger_update_range):
     write_file = property_map.keys()
     key = ''
     val = ''
@@ -41,17 +39,17 @@ def write_helper(sheets, property_map, param_map, converters, chart_update_mode,
             title = property_map[sid].get('name')
             for converter in converters:
                 if converter.support(title):
-                    info = converter.convert(param_map)
+                    info = converter.convert()
                     if len(info) == 2:
                         table, table_format = info
-                    elif len(info) == 5:
+                    else:
                         table, table_format, chart_format, key, val = info
-                    # map table update information
+                    # mapping table update information
                     table_info = Mapping.convert_to_map(table=table,
                                                         table_format=table_format,
                                                         n_col=table[0][:1],
                                                         trigger_update_range=trigger_update_range)
-                    # map chart update information
+                    # mapping chart update information
                     if key and val:
                         table_info['key'] = key
                         table_info['val'] = val
@@ -64,7 +62,7 @@ def write_helper(sheets, property_map, param_map, converters, chart_update_mode,
                     sheets.update(sid, table_info, chart_info)
                     break
     except Exception as error:
-        print(f'batch_write_update:{error}')
+        print(f'write_update:{error}')
         raise error
 
 
@@ -80,10 +78,10 @@ class Controller:
         # get data from google drive api(should be sync )
         log_dir = drive.search_files(QUERY_LOG_FOLDER)
         log_file = drive.search_files(QUERY_LOG_FILE)
-        # create folder if missing
+        # create log folder if missing
         if not log_dir:
             log_dir = drive.create_folder(LOG_FILE_NAME)
-        # create file if missing
+        # create log file if missing
         if not log_file:
             log_dir = log_dir[0] if type(log_dir) == 'list' else log_dir
             drive.create_file({'name': LOG_FILE_NAME + ' ' + CURRENT_DATE, 'mimeType': MIMETYPES[1],
@@ -99,27 +97,36 @@ class Controller:
                 # select mode
                 mode = 'batch' if i % 30 == 0 else 'trigger'
                 # get docs, sheets files id from the drive
-                doc_ids = drive.read_files(QUERY_READ, MIMETYPES[0], mode)
-                sheet_ids = drive.read_files(QUERY_WRITE, MIMETYPES[1], mode)
-                self.update(doc_ids, sheet_ids, drive, read_update_mode=mode, write_update_mode='update')
+                doc_ids = drive.read(QUERY_DOCS, MIMETYPES[0], mode)
+                sheet_ids = drive.read(QUERY_SHEETS, MIMETYPES[1], mode='batch')
+                self.update(doc_ids, sheet_ids, read_mode=mode, write_mode='update')
                 time.sleep(20)
         except Exception as error:
             print(f'main_event:{error}')
         finally:
-            self.update(doc_ids, sheet_ids, drive, read_update_mode='batch', write_update_mode='delete')
+            self.update(doc_ids, sheet_ids, read_mode='batch', write_mode='delete')
 
-    def update(self, doc_ids, sheet_ids, drive, read_update_mode, write_update_mode):
+    def update(self, doc_ids, sheet_ids, read_mode, write_mode):
         docs = self.docs
+        drive = self.drive
         sheets = self.sheets
-        update_range = []
+        target_ids = []
+        sheets_dto_map = {}
         try:
-            docs_id = drive.update_and_read_files(doc_ids, read_update_mode, params='docs, webViewLink, modifiedTime')
-            sheets_id = drive.update_and_read_files(sheet_ids, read_update_mode, params='sheets, name')
-            param_map = docs.update_param_map(doc_ids)
-            param_map = read_helper(docs_id, param_map, self.adaptors)
-            if read_update_mode == 'trigger':
-                update_range = Filters.get_target_index(doc_ids, param_map)
-            write_helper(sheets, sheets_id, param_map, self.converters, write_update_mode, update_range)
+            # get file properties
+            docs_prop_map = drive.update_and_read(doc_ids, read_mode, 'docs', params='webViewLink,modifiedTime')
+            sheets_prop_map = drive.update_and_read(sheet_ids, read_mode,'sheets', params='name')
+            # get parameters
+            docs_dto_map = docs.update_dto_map(doc_ids)
+            # add parameters -> dto
+            docs_dto_map = read_helper(docs_prop_map, docs_dto_map, self.adaptors)
+            if read_mode == 'trigger':
+                target_ids = Filters.filter_id(doc_ids, docs_dto_map)
+            sheets.update_dto_map(sheet_ids, sheets_dto_map)
+            print(f'sheets_dto_map={sheets_dto_map}')
+            read_helper(sheets_prop_map, sheets_dto_map, self.adaptors)
+            # convert dto into table
+            write_helper(sheets, sheets_prop_map, self.converters, write_mode, target_ids)
         except Exception as error:
             print(f'update:{error}')
             raise error
@@ -128,30 +135,3 @@ class Controller:
 if __name__ == '__main__':
     pass
 
-# def batch_files_update(drive, param_map):
-#     try:
-#         drive.update_param_map(param_map)
-#         for file_id in param_map.keys():
-#             # build parameters
-#             name = param_map[file_id]['Student Name']
-#             course = param_map[file_id]['Course']
-#             file_name = name + "_" + course
-#             # update file name
-#             target_id = drive.search_files(f"name contains '{file_name}'")
-#             if file_id not in target_id:
-#                 drive.update_files([file_id], {'name': file_name})
-#             target_id = drive.search_files(f"name contains '{file_name}'")
-#             # find file id
-#             target_file = drive.inflate_files(target_id[0], 'id, name, parents')
-#             # get parent file which is a folder
-#             parent_id = target_file.get('parents')
-#             parent_file = drive.inflate_files(parent_id[0], 'id, name')
-#             folder = drive.search_files(f"name contains '{name}' and mimeType = '{MIMETYPES[2]}'")
-#             if len(folder) == 0 or not parent_id:
-#                 folder = [drive.create_folder(name)]
-#             # change the file's directory if the title doesn't match
-#             if parent_file.get('name') != target_file.get('name'):
-#                 drive.move_folder(file_id, target_file.get('parents'), folder[0])
-#
-#     except Exception as error:
-#         print(f'run time error occurred: {error}')

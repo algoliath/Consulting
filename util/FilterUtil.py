@@ -1,19 +1,15 @@
-def get_target_index(filter_id, filter_map):
-    i = 0
-    target_range = []
-    indices = {}
-    for doc_id in filter_map.keys():
-        indices[doc_id] = i
-        i += 1
-    for doc_id in filter_id:
-        target_range.append(indices[doc_id])
-    return target_range
+def filter_id(filter_id, filter_map):
+    target_id = []
+    for file_id in filter_id:
+        if file_id in filter_map:
+            target_id.append(file_id)
+    return target_id
 
 
 def filter_key(filter_id, filter_map):
     remove = []
-    for doc_id in filter_map.keys():
-        if doc_id not in filter_id:
-            remove.append(doc_id)
-    for doc_id in remove:
-        del filter_map[doc_id]
+    for file_id in filter_map.keys():
+        if file_id not in filter_id:
+            remove.append(file_id)
+    for file_id in remove:
+        del filter_map[file_id]

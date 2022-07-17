@@ -1,4 +1,4 @@
-from main.googleAPI.request.request_form.sheet.table.BasicTableFormat import BasicTableFormat
+from request.request_form.sheet.table.BasicTableFormat import BasicTableFormat
 
 
 class TimeLogFormat(BasicTableFormat):

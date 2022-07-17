@@ -16,7 +16,7 @@
 Recursively extracts the text from a Google Doc.
 """
 
-import main.googleAPI.util.FilterUtil as Filter
+import util.FilterUtil as Filter
 import googleapiclient.discovery as discovery
 from httplib2 import Http
 
@@ -72,7 +72,7 @@ def update_param(content):
     for i in range(0, len(key_value)-1, 2):
         k = key_value[i]
         v = key_value[i + 1]
-        param[k] = v
+        param[k.upper()] = v
         i += 2
     return param
 
@@ -99,15 +99,16 @@ class Docs:
             print(f'build_param_map:{error}')
         return param_map
 
-    def update_param_map(self, read_file):
+    def update_dto_map(self, read_file):
         param_map = self.build_param_map(read_file)
         param_filter = []
         Filter.filter_key(read_file, param_map)
         try:
             for docId in param_map.keys():
-                param = update_param(param_map[docId]['content'])
-                param_map[docId] = param
-                if not param:
+                dto = update_param(param_map[docId]['content'])
+                dto['DOCS ID'] = docId
+                param_map[docId] = dto
+                if not dto:
                     param_filter.append(docId)
             for docId in param_filter:
                 del param_map[docId]

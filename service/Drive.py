@@ -1,19 +1,10 @@
 import os.path
 
-from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
-from googleapiclient.http import MediaFileUpload
 
 """Shows basic usage of the Drive v3 API.
 Prints the names and ids of the first 10 files the user has access to.
 """
-
-from apiclient import errors
-
-
-# ...
 
 
 def apply_filter(file_id, cache):
@@ -26,19 +17,20 @@ def apply_filter(file_id, cache):
         del cache[fid]
 
 
+def build_drive(cred):
+    service = build('drive', 'v3', credentials=cred)
+    return service
+
+
 class Drive:
 
     def __init__(self, cred):
         # If modifying these scopes, delete the file token.json.
-        self.service = self.build_drive(cred)
+        self.service = build_drive(cred)
         self.read_file = {}
         self.write_file = {}
 
-    def build_drive(self, cred):
-        service = build('drive', 'v3', credentials=cred)
-        return service
-
-    def read_files(self, query, mimetype, mode):
+    def read(self, query, mimetype, mode):
         try:
             if mode == 'batch':
                 read_file_id = self.search_files(query)
@@ -50,19 +42,19 @@ class Drive:
             print(f'read_files: {error}')
             raise error
 
-    def update_and_read_files(self, file_id, mode, mime_type, params='parents, name, id'):
+    def update_and_read(self, file_id, mode, mime_type, params='parents, name, id'):
+        cache = self.read_file
         try:
-            if mime_type == 'docs':
-                cache = self.read_file
-            elif mime_type == 'sheets':
+            if mime_type == 'sheets':
                 cache = self.write_file
             # filter files if batch mode
             if mode == 'batch':
                 apply_filter(file_id, cache)
             # inflate files if trigger mode
             for fid in file_id:
-                file = self.inflate_files(fid, params)
-                cache[fid] = file
+                if fid not in cache:
+                    file = self.inflate_files(fid, params)
+                    cache[fid] = file
             return cache
         except Exception as error:
             print(f'update_files={error}')
