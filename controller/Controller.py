@@ -10,7 +10,9 @@ MIMETYPES = ['application/vnd.google-apps.document', 'application/vnd.google-app
 
 CURRENT_DATE = str(datetime.datetime.now()).split(' ')[0]
 QUERY_DOCS = f"'{GOOGLE_ACCOUNT}' in writers and mimeType = '{MIMETYPES[0]}'"
-QUERY_SHEETS = f"'{GOOGLE_ACCOUNT}' in writers and mimeType = '{MIMETYPES[1]}'"
+QUERY_READ_SHEETS = f"'{GOOGLE_ACCOUNT}' in writers and mimeType = '{MIMETYPES[1]}'" \
+               f" and (name contains 'Student' or name contains 'Tutor' or name contains 'Consultant')"
+QUERY_WRITE_SHEETS = f"'{GOOGLE_ACCOUNT}' in writers and mimeType = '{MIMETYPES[1]}'"
 QUERY_LOG_FILE = f"name contains 'Time Log {CURRENT_DATE}' and mimeType = '{MIMETYPES[1]}'"
 QUERY_LOG_FOLDER = f"name contains 'Time Log' and mimeType = '{MIMETYPES[2]}'"
 LOG_FILE_NAME = 'Time Log'
@@ -98,7 +100,7 @@ class Controller:
                 mode = 'batch' if i % 30 == 0 else 'trigger'
                 # get docs, sheets files id from the drive
                 doc_ids = drive.read(QUERY_DOCS, MIMETYPES[0], mode)
-                sheet_ids = drive.read(QUERY_SHEETS, MIMETYPES[1], mode='batch')
+                sheet_ids = drive.read(QUERY_WRITE_SHEETS, MIMETYPES[1], mode='batch')
                 self.update(doc_ids, sheet_ids, read_mode=mode, write_mode='update')
                 time.sleep(20)
         except Exception as error:
@@ -119,12 +121,12 @@ class Controller:
             # get parameters
             docs_dto_map = docs.update_dto_map(doc_ids)
             # add parameters -> dto
-            docs_dto_map = read_helper(docs_prop_map, docs_dto_map, self.adaptors)
+            docs_dto_map = read_helper(docs_prop_map, docs_dto_map, [self.adaptors[0]])
             if read_mode == 'trigger':
                 target_ids = Filters.filter_id(doc_ids, docs_dto_map)
             sheets.update_dto_map(sheet_ids, sheets_dto_map)
             print(f'sheets_dto_map={sheets_dto_map}')
-            read_helper(sheets_prop_map, sheets_dto_map, self.adaptors)
+            read_helper(sheets_prop_map, sheets_dto_map, self.adaptors[1:])
             # convert dto into table
             write_helper(sheets, sheets_prop_map, self.converters, write_mode, target_ids)
         except Exception as error:

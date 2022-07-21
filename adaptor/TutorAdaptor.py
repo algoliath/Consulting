@@ -1,5 +1,5 @@
 from adaptor.interface.Adaptor import Adaptor
-import domain.table.Columns as column_factory
+import domain.factory.table.Columns as column_factory
 
 
 class TutorAdaptor(Adaptor):

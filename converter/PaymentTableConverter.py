@@ -1,6 +1,6 @@
-from converter.interface.Converter import Converter
-from domain.table import Columns
-from request.request_form.sheet.table.TimeLogFormat import TimeLogFormat
+from converter.model.Converter import Converter
+from domain.factory.table import Columns
+from request.request_form.sheet.table.BasicFormat import BasicFormat
 
 
 class PaymentTableConverter(Converter):
@@ -20,7 +20,9 @@ class PaymentTableConverter(Converter):
                         DOCS.DOCS_ID DOCS_ID,
                         SUM(DOCS.SPENT_HOURS) TOTAL_HOURS_SPENT
                          
-                 FROM CONSULTANT LEFT JOIN DOCS ON DOCS.CONSULTANT_ID = CONSULTANT.CONSULTANT_ID
+                 FROM CONSULTANT 
+                 LEFT JOIN DOCS ON DOCS.CONSULTANT_ID = CONSULTANT.CONSULTANT_ID
+                 LEFT JOIN STUDENT ON STUDENT.STUDENT_ID = DOCS.STUDENT_ID
                  GROUP BY CONSULTANT.CONSULTANT_ID
                  HAVING COUNT(DOCS_ID) >= 1
                 """
@@ -38,7 +40,7 @@ class PaymentTableConverter(Converter):
         print(table)
         # sort (options)
         # table = sorted(table, key=lambda rows: rows[0])
-        table_format = TimeLogFormat()
+        table_format = BasicFormat()
         return table, table_format
 
     def support(self, file_name):

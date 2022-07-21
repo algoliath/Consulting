@@ -1,19 +1,22 @@
 from adaptor.interface.Adaptor import Adaptor
-import domain.table.Columns as column_factory
+from domain.factory.table import Columns
 
 
 class ConsultantAdaptor(Adaptor):
 
     def __init__(self, repository):
         self.repository = repository
-        self.columns = column_factory.consultant_table()
+        self.columns = Columns.consultant_table()
 
     def supports(self, dto, target_columns=''):
-        columns = self.columns
+        table_columns = self.columns
         if target_columns:
-            columns = target_columns
-        for col in columns:
+            table_columns = target_columns
+        for col in table_columns:
             if col.upper() not in dto:
+                return False
+        for col in dto:
+            if col not in table_columns:
                 return False
         return True
 

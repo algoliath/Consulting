@@ -1,10 +1,8 @@
 from __future__ import print_function
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
-
+import logging as log
 from util import FilterUtil
-
-TABLE_RANGE = 'A1:300'
 
 
 def build_sheet(credentials) -> object:
@@ -36,18 +34,18 @@ class Sheets:
             break
         return sheet_id, chart_id
 
-    def update_dto_map(self, sheet_ids, dto_map):
-        try:
-            for sid in sheet_ids:
-                result = self.read_cells(sid, dto_map, 'A1:F30')
-                print(f'result={result}')
-        except Exception as error:
-            print(error)
-            raise error
-
     def update(self, sid, table_info, chart_info):
         self.update_format(sid, table_info, chart_info)
         self.update_cells(sid, table_info)
+
+    def update_dto_map(self, sheet_ids, dto_map):
+        try:
+            for sid in sheet_ids:
+                update_result = self.read_cells(sid, dto_map, 'A1:F30')
+                print(f'result={update_result}')
+        except Exception as error:
+            print(error)
+            raise error
 
     def update_format(self, sid, table_info, chart_info):
         gid, cid = self.get_content(sid)
@@ -107,12 +105,15 @@ class Sheets:
         result = self.sheet.values().get(spreadsheetId=sid,
                                          range=table_range).execute()
         values = result.get('values', [])
+
         if len(values) < 2:
             return
 
         # read columns from sheet header
         columns = values[0]
         values = values[1:]
+
+        log.info(f'columns = {columns}')
 
         dto_map[sid] = []
         if not values:
@@ -123,6 +124,9 @@ class Sheets:
                 print('No data found.')
                 return
             for row in values:
+                if len(row) != len(columns):
+                    return
+                log.info(f'rows = {row}')
                 # Print columns A and E, which correspond to indices 0 and 4.
                 i = 0
                 dto = {}
@@ -131,7 +135,7 @@ class Sheets:
                     i += 1
                 dto_map[sid].append(dto)
         except HttpError as err:
-            print(err)
+            log.info(f'read cell = {err}')
         return result
 
     def clear_cells(self, sid, table_range):

@@ -1,4 +1,4 @@
-from main.googleAPI.request.request_form.sheet.chart.BasicChartFormat import BasicChartFormat
+from request.request_form.sheet.chart.BasicChartFormat import BasicChartFormat
 
 
 def is_valid(table, col):

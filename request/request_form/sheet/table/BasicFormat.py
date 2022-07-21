@@ -1,7 +1,4 @@
-from request.request_form.sheet.table.BasicTableFormat import BasicTableFormat
-
-
-class TimeLogFormat(BasicTableFormat):
+class BasicFormat():
 
     def __init__(self):
         pass

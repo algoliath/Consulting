@@ -1,12 +1,7 @@
 import mysql.connector as connector
 
-if __name__ == '__main__':
 
-    connection = connector.connect(host='localhost',
-                                   user='root',
-                                   password='db_password',
-                                   database='consulting')
-
+def student_table():
     """
     DEFINE TABLES: DOCS, STUDENT, TUTOR, CONSULTING
     """
@@ -33,24 +28,35 @@ if __name__ == '__main__':
                     """
             cursor.execute(query)
 
-        # STUDENT
+
+def docs_table():
+    # STUDENT
+    with connection.cursor(buffered=True) as cursor:
         query = "SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'STUDENT'"
         cursor.execute(query)
         if not cursor.fetchone():
             query = f"""
-            CREATE TABLE STUDENT( 
-            STUDENT_ID VARCHAR(100) PRIMARY KEY,
-            NAME VARCHAR(100) NOT NULL,
-            EMAIL VARCHAR(50) NOT NULL,
-            PHONE_NUMBER VARCHAR(10) NOT NULL,
-            CURRENT_PACKAGE VARCHAR(10) NOT NULL,
-            CURRENT_APPS VARCHAR(100) NOT NULL)
-            """
+                        CREATE TABLE STUDENT( 
+                        STUDENT_ID VARCHAR(100) PRIMARY KEY,
+                        NAME VARCHAR(100) NOT NULL,
+                        EMAIL VARCHAR(50) NOT NULL,
+                        PHONE_NUMBER VARCHAR(10) NOT NULL,
+                        CURRENT_PACKAGE VARCHAR(10) NOT NULL,
+                        CURRENT_APPS VARCHAR(100) NOT NULL)
+                        """
+            cursor.execute()
+        else:
+            query = f"""
+                    ALTER TABLE DOCS MODIFY COLUMN SPENT_HOURS VARCHAR(30) NOT NULL 
+                    """
+            cursor.execute(query)
 
-        # TUTOR
+
+def tutor_table():
+    # TUTOR
+    with connection.cursor(buffered=True) as cursor:
         query = "SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'TUTOR'"
         cursor.execute(query)
-
         if not cursor.fetchall():
             query = f"""
                     CREATE TABLE TUTOR( 
@@ -61,15 +67,31 @@ if __name__ == '__main__':
                     """
             cursor.execute(query)
 
-        # CONSULTANT
+
+def consultant_table():
+    # CONSULTANT
+    with connection.cursor(buffered=True) as cursor:
         query = "SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'CONSULTANT'"
         cursor.execute(query)
         if not cursor.fetchall():
             query = f"""
-                    CREATE TABLE CONSULTANT( 
-                    CONSULTANT_ID VARCHAR(100) PRIMARY KEY,
-                    NAME VARCHAR(100) NOT NULL,
-                    EMAIL VARCHAR(50) NOT NULL,
-                    PHONE_NUMBER VARCHAR(10) NOT NULL)
-                    """
+                        CREATE TABLE CONSULTANT( 
+                        CONSULTANT_ID VARCHAR(100) PRIMARY KEY,
+                        NAME VARCHAR(100) NOT NULL,
+                        EMAIL VARCHAR(50) NOT NULL,
+                        PHONE_NUMBER VARCHAR(10) NOT NULL)
+                        """
             cursor.execute(query)
+        else:
+            query = f"""
+                        TRUNCATE TABLE CONSULTANT
+                        """
+            cursor.execute(query)
+
+
+if __name__ == '__main__':
+    connection = connector.connect(host='localhost',
+                                   user='root',
+                                   password='db_password',
+                                   database='consulting')
+    consultant_table()

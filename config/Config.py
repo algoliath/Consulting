@@ -5,6 +5,7 @@ from adaptor.DocumentAdaptor import DocumentAdaptor
 from adaptor.StudentAdaptor import StudentAdaptor
 from adaptor.TutorAdaptor import TutorAdaptor
 from converter.PaymentTableConverter import PaymentTableConverter
+from converter.StatsTableConverter import StatsTableConverter
 from converter.TimeTableConverter import TimeTableConverter
 from controller.Controller import Controller
 from repo.ConsultantRepository import ConsultantRepository
@@ -15,7 +16,7 @@ from service.Sheets import Sheets
 from service.Docs import Docs
 from repo.DocsRepository import DocsRepository
 from repo.TutorRepository import TutorRepository
-from database.DataSource import getConnection
+from util.db_util.DataSource import getConnection
 from auth.credentials import get_credentials
 
 CURRENT_DATE = str(datetime.now()).split(' ')[0]
@@ -23,9 +24,12 @@ CREDENTIALS = get_credentials()
 DB_CONNECTION = getConnection()
 REPOSITORY = [DocsRepository(DB_CONNECTION), StudentRepository(DB_CONNECTION),
               TutorRepository(DB_CONNECTION), ConsultantRepository(DB_CONNECTION)]
-ADAPTORS = [DocumentAdaptor(REPOSITORY[0], Gmail(CREDENTIALS)), StudentAdaptor(REPOSITORY[1]),
-            TutorAdaptor(REPOSITORY[2]), ConsultantAdaptor(REPOSITORY[3])]
-CONVERTERS = [TimeTableConverter(REPOSITORY[0], CURRENT_DATE), PaymentTableConverter(DB_CONNECTION, CURRENT_DATE)]
+ADAPTORS = [DocumentAdaptor(REPOSITORY[0], Gmail(CREDENTIALS)),
+            StudentAdaptor(REPOSITORY[1]),
+            TutorAdaptor(REPOSITORY[2]),
+            ConsultantAdaptor(REPOSITORY[3])]
+CONVERTERS = [TimeTableConverter(DB_CONNECTION, CURRENT_DATE),
+              PaymentTableConverter(DB_CONNECTION, CURRENT_DATE)]
 
 """ alternative (web driver instead of Google API)
 from service.Web import Web

@@ -1,4 +1,4 @@
-from domain.entity.Person import Person
+from domain.entity.person.Person import Person
 
 
 class Consultant(Person):

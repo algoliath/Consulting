@@ -1,7 +1,6 @@
 from adaptor.interface.Adaptor import Adaptor
-from service.Gmail import Gmail
 from util.TimeUtil import time_format
-import domain.table.Columns as columnFactory
+import domain.factory.table.Columns as columnFactory
 
 
 class DocumentAdaptor(Adaptor):
@@ -22,7 +21,9 @@ class DocumentAdaptor(Adaptor):
 
     def handle(self, dto_map, prop_map):
         repository = self.repository
-        # update target dto
+        gmail = self.gmail
+
+        # update dto
         target_dto_map = {}
         for docs_id in dto_map:
             dto = dto_map[docs_id]
@@ -31,9 +32,8 @@ class DocumentAdaptor(Adaptor):
                 self.add_to_dto(dto, prop)
                 target_dto_map[docs_id] = dto
                 if not dto['TIME LOG']:
-                    self.gmail.send_mail(docs_id, dto)
+                    gmail.send_mail(docs_id, dto)
 
-        print(f'dto_map={target_dto_map}')
         # update repository
         update_dto_map = {}
         save_dto_map = {}

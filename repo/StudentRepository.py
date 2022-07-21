@@ -1,4 +1,4 @@
-from repo.interface.Repository import Repository
+from repo.model.Repository import Repository
 
 
 class StudentRepository(Repository):
