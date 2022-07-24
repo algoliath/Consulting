@@ -1,8 +1,6 @@
 from converter.model.Converter import Converter
 from domain.factory.Attributes import get_attributes
-from domain.factory.table import Columns
 from request.request_form.docs.table.BasicTableFormat import BasicTableFormat
-from request.request_form.sheet.table.StatsTableFormat import StatsTableFormat
 from request.request_form.sheet.chart.StatsChartFormat import StatsChartFormat
 
 

@@ -1,5 +1,5 @@
 from adaptor.interface.Adaptor import Adaptor
-import domain.factory.table.Columns as column_factory
+import domain.factory.Columns as column_factory
 
 
 class TutorAdaptor(Adaptor):
@@ -22,8 +22,8 @@ class TutorAdaptor(Adaptor):
         repository = self.repository
         # update target dto
         target_dto_map = {}
-        for docs_id in dto_map:
-            dto = dto_map[docs_id]
+        for sid in dto_map:
+            dto = dto_map[sid]
             for data in dto:
                 if self.supports(data):
                     target_dto_map[data['TUTOR ID']] = data

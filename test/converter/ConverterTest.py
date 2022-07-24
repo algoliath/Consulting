@@ -1,8 +1,6 @@
 from datetime import datetime
-
 from converter.PaymentTableConverter import PaymentTableConverter
 import util.db_util.DataSource as dbUtils
-from converter.StatsTableConverter import StatsTableConverter
 
 CURRENT_DATE = str(datetime.now()).split(' ')[0]
 
@@ -12,11 +10,12 @@ class converter_test:
     def __init__(self, converter):
         self.converter = converter
 
-    def update(self):
-        self.converter.convert()
+    def update(self, query):
+        self.converter.convert(query)
 
 
 if __name__ == '__main__':
     converter_test = converter_test(
-        StatsTableConverter('Package', 'Apps', connection=dbUtils.getConnection()))
-    converter_test.update()
+        PaymentTableConverter(connection=dbUtils.getConnection(), current_date=CURRENT_DATE))
+    query = "SELECT * FROM CONSULTANT"
+    converter_test.update(query)

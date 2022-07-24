@@ -1,3 +1,4 @@
+from domain.factory import Columns
 from repo.model.Repository import Repository
 
 
@@ -5,7 +6,7 @@ class DocsRepository(Repository):
 
     def __init__(self, db_connection):
         self.connection = db_connection
-        self.columns = self.get_columns()
+        self.columns = Columns.docs_table()
 
     def save(self, dto_map):
         rows = self.convert_dto(dto_map, self.columns)
@@ -49,17 +50,6 @@ class DocsRepository(Repository):
             result = cursor.fetchall()
         print(f'result={result}')
         return result
-
-    def get_columns(self):
-        query = "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'DOCS'"
-        with self.connection.cursor() as cursor:
-            cursor.execute(query)
-            result = cursor.fetchall()
-            cursor.close()
-        columns = []
-        for col in result:
-            columns.append(col[0])
-        return columns
 
     def convert_dto(self, dto_map, columns):
         rows = []

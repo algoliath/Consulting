@@ -1,17 +1,22 @@
 from domain.factory import Columns
 from repo.model.Repository import Repository
+import logging as log
+
+log.getLogger('Consultant-Repo').setLevel('DEBUG')
 
 
-class StudentRepository(Repository):
+class ConsultantRepository(Repository):
 
     def __init__(self, db_connection):
         self.connection = db_connection
-        self.columns = Columns.student_table()
+        self.columns = Columns.consultant_table()
 
     def save(self, dto_map):
         rows = self.convert_dto(dto_map, self.columns)
+        log.info(f'consultant save rows={rows}')
         query = """
-                INSERT INTO STUDENT VALUES(%s, %s, %s, %s, %s, %s)
+                INSERT INTO CONSULTANT
+                VALUES(%s, %s, %s, %s)
                 """
         connect = self.connection
         with connect.cursor() as cursor:
@@ -19,14 +24,15 @@ class StudentRepository(Repository):
         connect.commit()
 
     def update(self, dto_map):
+        log.info(f'columns={self.columns}')
         rows = self.convert_dto(dto_map, self.columns[1:] + [self.columns[0]])
+        log.info(f'consultant update rows={rows}')
         query = """
-                UPDATE STUDENT SET NAME = %s,
-                                   EMAIL = %s,
-                                   PHONE_NUMBER = %s,
-                                   CURRENT_PACKAGE = %s,
-                                   CURRENT_APPS = %s
-                WHERE STUDENT_ID = %s
+                UPDATE CONSULTANT SET 
+                NAME = %s,
+                EMAIL = %s,
+                PHONE_NUMBER = %s
+                WHERE CONSULTANT_ID = %s
                 """
         connect = self.connection
         with connect.cursor() as cursor:
@@ -35,12 +41,13 @@ class StudentRepository(Repository):
 
     def read(self):
         query = """
-                SELECT * FROM STUDENT
+                SELECT * FROM CONSULTANT
                 """
         connect = self.connection
         with connect.cursor(buffered=True) as cursor:
             cursor.execute(query)
             result = cursor.fetchall()
+        log.debug(f'result={result}')
         return result
 
     def convert_dto(self, dto_map, columns):
@@ -53,5 +60,5 @@ class StudentRepository(Repository):
                     row.append(dto_map[doc_id].get(formatted))
                 rows.append(row)
         except Exception as error:
-            print(error)
+            log.info(error)
         return rows

@@ -1,3 +1,4 @@
+from domain.factory import Columns
 from repo.model.Repository import Repository
 
 
@@ -5,7 +6,7 @@ class TutorRepository(Repository):
 
     def __init__(self, db_connection):
         self.connection = db_connection
-        self.columns = self.get_columns()
+        self.columns = Columns.tutor_table()
 
     def save(self, dto_map):
         rows = self.convert_dto(dto_map, self.columns)
@@ -41,17 +42,6 @@ class TutorRepository(Repository):
             result = cursor.fetchall()
         print(f'result={result}')
         return result
-
-    def get_columns(self):
-        query = "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'TUTOR'"
-        with self.connection.cursor() as cursor:
-            cursor.execute(query)
-            result = cursor.fetchall()
-        columns = []
-        for col in result:
-            columns.append(col[0])
-        print(f'columns = {columns}')
-        return columns
 
     def convert_dto(self, dto_map, columns):
         rows = []

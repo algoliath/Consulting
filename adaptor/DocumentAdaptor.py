@@ -1,13 +1,13 @@
 from adaptor.interface.Adaptor import Adaptor
 from util.TimeUtil import time_format
-import domain.factory.table.Columns as columnFactory
+import domain.factory.Columns as columnFactory
 
 
 class DocumentAdaptor(Adaptor):
 
     def __init__(self, repository, gmail):
         self.repository = repository
-        self.columns = columnFactory.time_table()
+        self.columns = columnFactory.docs_table()
         self.gmail = gmail
 
     def supports(self, dto, target_columns=''):

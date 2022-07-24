@@ -1,6 +1,10 @@
+import logging as log
+
 from converter.model.Converter import Converter
-from domain.factory.table import Columns
+from domain.factory import Columns
 from request.request_form.sheet.table.BasicFormat import BasicFormat
+
+log.getLogger().setLevel("DEBUG")
 
 
 class PaymentTableConverter(Converter):
@@ -9,15 +13,14 @@ class PaymentTableConverter(Converter):
         self.connection = connection
         self.current_date = current_date
 
-    def convert(self):
+    def convert(self, new_query=''):
 
         connection = self.connection
-
         query = """
                  SELECT CONSULTANT.CONSULTANT_ID CONSULTANT_ID, 
                         CONSULTANT.NAME CONSULTANT_NAME,
                         DOCS.STUDENT_ID STUDENT_ID, 
-                        DOCS.DOCS_ID DOCS_ID,
+                        STUDENT.NAME STUDENT_NAME,
                         SUM(DOCS.SPENT_HOURS) TOTAL_HOURS_SPENT
                          
                  FROM CONSULTANT 
@@ -26,10 +29,12 @@ class PaymentTableConverter(Converter):
                  GROUP BY CONSULTANT.CONSULTANT_ID
                  HAVING COUNT(DOCS_ID) >= 1
                 """
+        if new_query:
+            query = new_query
         with connection.cursor() as cursor:
             cursor.execute(query)
             result = cursor.fetchall()
-            print(f'result={result}')
+            log.debug(f'payment table result={result}')
 
         header = []
         for col in Columns.payment_table():
@@ -37,7 +42,6 @@ class PaymentTableConverter(Converter):
         table = [header]
         for row in result:
             table.append(row)
-        print(table)
         # sort (options)
         # table = sorted(table, key=lambda rows: rows[0])
         table_format = BasicFormat()

@@ -1,4 +1,5 @@
 import os.path
+import logging as log
 
 from googleapiclient.discovery import build
 
@@ -36,10 +37,10 @@ class Drive:
                 read_file_id = self.search_files(query)
             else:
                 read_file_id = self.search_changed_files(mimetype)
-            print(f'read_file_id: {read_file_id}')
+            log.info(f'read_file_id: {read_file_id}')
             return read_file_id
         except Exception as error:
-            print(f'read_files: {error}')
+            log.info(f'read_files: {error}')
             raise error
 
     def update_and_read(self, file_id, mode, mime_type, params='parents, name, id'):
@@ -57,13 +58,13 @@ class Drive:
                     cache[fid] = file
             return cache
         except Exception as error:
-            print(f'update_files={error}')
+            log.info(f'update_files={error}')
             raise error
 
     def create_file(self, file_metadata):
         file = self.service.files().create(body=file_metadata,
                                            fields='id').execute()
-        print('File ID: %s' % file.get('id'))
+        log.info('File ID: %s' % file.get('id'))
         return file.get('id')
 
     def modify_files(self, files, request):
@@ -74,7 +75,7 @@ class Drive:
             self.service.files().update(fileId=file_id, body=request).execute()
 
     def search_files(self, query):
-        print(f'query={query}')
+        log.info(f'query={query}')
         page_token = None
         files_id = []
         while True:
@@ -84,12 +85,12 @@ class Drive:
                                                  pageToken=page_token).execute()
             for file in response.get('files', []):
                 # Process change
-                print('Found file: %s (%s)' % (file.get('name'), file.get('id')))
+                log.info('Found file: %s (%s)' % (file.get('name'), file.get('id')))
                 files_id.append(file.get('id'))
             page_token = response.get('nextPageToken', None)
             if page_token is None:
                 break
-        print(f'files_id={files_id}')
+        log.info(f'files_id={files_id}')
         return files_id
 
     def search_changed_files(self, mime_type):
@@ -105,7 +106,7 @@ class Drive:
             for changes in response.get('changes'):
                 # Process change
                 if changes.get('file').get('mimeType') == mime_type:
-                    print('Found file: %s (%s) (mimeType:%s)' % (
+                    log.info('Found file: %s (%s) (mimeType:%s)' % (
                         changes.get('file').get('name'), changes.get('fileId'), changes.get('file').get('mimeType')))
                     files_id.append(changes.get('fileId'))
 
@@ -119,7 +120,7 @@ class Drive:
             file = self.service.files().get(fileId=file_id, fields=params).execute()
             return file
         except RuntimeError as error:
-            print(f'run time error occurred: {error}')
+            log.info(f'file inflating error occurred: {error}')
 
     def create_folder(self, title):
         file_metadata = {
@@ -128,7 +129,7 @@ class Drive:
         }
         file = self.service.files().create(body=file_metadata,
                                            fields='id').execute()
-        print('Folder ID: %s' % file.get('id'))
+        log.info('Folder ID: %s' % file.get('id'))
         return file.get('id')
 
     def move_folder(self, file_id, parents, folder_id):
@@ -139,12 +140,6 @@ class Drive:
                                     addParents=folder_id,
                                     removeParents=previous_parents,
                                     fields='id, parents').execute()
-    # deleting files are not recommended
-    # def delete_file(self, file_id):
-    #     try:
-    #         self.service.files().delete(fileId=file_id).execute()
-    #     except:
-    #         print('An error occurred')
 
 
 def main():
@@ -153,3 +148,10 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+# deleting files are not recommended
+# def delete_file(self, file_id):
+#     try:
+#         self.service.files().delete(fileId=file_id).execute()
+#     except:
+#         print('An error occurred')

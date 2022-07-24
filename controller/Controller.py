@@ -2,31 +2,33 @@ import time
 import datetime
 import util.FilterUtil as Filters
 import util.MapUtil as Mapping
+import logging as log
 
 GOOGLE_ACCOUNT = '2016123304@yonsei.ac.kr'
-
 MIMETYPES = ['application/vnd.google-apps.document', 'application/vnd.google-apps.spreadsheet',
              'application/vnd.google-apps.folder']
 
 CURRENT_DATE = str(datetime.datetime.now()).split(' ')[0]
 QUERY_DOCS = f"'{GOOGLE_ACCOUNT}' in writers and mimeType = '{MIMETYPES[0]}'"
 QUERY_READ_SHEETS = f"'{GOOGLE_ACCOUNT}' in writers and mimeType = '{MIMETYPES[1]}'" \
-               f" and (name contains 'Student' or name contains 'Tutor' or name contains 'Consultant')"
+                    f" and (name contains 'Student' or name contains 'Tutor' or name contains 'Consultant')"
 QUERY_WRITE_SHEETS = f"'{GOOGLE_ACCOUNT}' in writers and mimeType = '{MIMETYPES[1]}'"
 QUERY_LOG_FILE = f"name contains 'Time Log {CURRENT_DATE}' and mimeType = '{MIMETYPES[1]}'"
 QUERY_LOG_FOLDER = f"name contains 'Time Log' and mimeType = '{MIMETYPES[2]}'"
 LOG_FILE_NAME = 'Time Log'
+log.getLogger().setLevel('INFO')
 
 
 # helper function to match parameter map to the template requirements
 def read_helper(prop_map, dto_map, adaptors):
     # update time log data
+    log.info(f'adapter={adaptors}')
     try:
         for adaptor in adaptors:
             adaptor.handle(dto_map, prop_map)
         return dto_map
     except Exception as error:
-        print(f'read_update:{error}')
+        log.info(f'read_update:{error}')
         raise error
 
 
@@ -57,14 +59,14 @@ def write_helper(sheets, property_map, converters, chart_update_mode, trigger_up
                         table_info['val'] = val
                         chart_info = Mapping.convert_to_map(chart_format=chart_format,
                                                             chart_update_mode=chart_update_mode)
-                    print(f'table = {table}')
-                    print(f'table_info = {table_info}')
-                    print(f'chart_info = {chart_info}')
+                    log.info(f'table = {table}')
+                    log.info(f'table_info = {table_info}')
+                    log.info(f'chart_info = {chart_info}')
                     # update
                     sheets.update(sid, table_info, chart_info)
                     break
     except Exception as error:
-        print(f'write_update:{error}')
+        log.info(f'write_update:{error}')
         raise error
 
 
@@ -77,7 +79,7 @@ class Controller:
         self.sheets = sheets
         self.adaptors = adaptors
         self.converters = converters
-        # get data from google drive api(should be sync )
+        # get data from google drive api(should be sync)
         log_dir = drive.search_files(QUERY_LOG_FOLDER)
         log_file = drive.search_files(QUERY_LOG_FILE)
         # create log folder if missing
@@ -104,7 +106,7 @@ class Controller:
                 self.update(doc_ids, sheet_ids, read_mode=mode, write_mode='update')
                 time.sleep(20)
         except Exception as error:
-            print(f'main_event:{error}')
+            log.info(f'main_event:{error}')
         finally:
             self.update(doc_ids, sheet_ids, read_mode='batch', write_mode='delete')
 
@@ -117,7 +119,7 @@ class Controller:
         try:
             # get file properties
             docs_prop_map = drive.update_and_read(doc_ids, read_mode, 'docs', params='webViewLink,modifiedTime')
-            sheets_prop_map = drive.update_and_read(sheet_ids, read_mode,'sheets', params='name')
+            sheets_prop_map = drive.update_and_read(sheet_ids, read_mode, 'sheets', params='name')
             # get parameters
             docs_dto_map = docs.update_dto_map(doc_ids)
             # add parameters -> dto
@@ -125,15 +127,13 @@ class Controller:
             if read_mode == 'trigger':
                 target_ids = Filters.filter_id(doc_ids, docs_dto_map)
             sheets.update_dto_map(sheet_ids, sheets_dto_map)
-            print(f'sheets_dto_map={sheets_dto_map}')
             read_helper(sheets_prop_map, sheets_dto_map, self.adaptors[1:])
-            # convert dto into table
+            # convert dto -> table
             write_helper(sheets, sheets_prop_map, self.converters, write_mode, target_ids)
         except Exception as error:
-            print(f'update:{error}')
+            log.info(f'update:{error}')
             raise error
 
 
 if __name__ == '__main__':
     pass
-

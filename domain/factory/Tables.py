@@ -84,9 +84,10 @@ def consultant_table():
             cursor.execute(query)
         else:
             query = f"""
-                        TRUNCATE TABLE CONSULTANT
+                        DELETE FROM CONSULTANT
                         """
             cursor.execute(query)
+            connection.commit()
 
 
 if __name__ == '__main__':

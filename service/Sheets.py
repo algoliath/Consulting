@@ -2,7 +2,6 @@ from __future__ import print_function
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 import logging as log
-from util import FilterUtil
 
 
 def build_sheet(credentials) -> object:
@@ -48,19 +47,17 @@ class Sheets:
             raise error
 
     def update_format(self, sid, table_info, chart_info):
+        # get id
         gid, cid = self.get_content(sid)
-        # update info
-        table = table_info['table']
+        # table info
         table_format = table_info['table_format']
         n_col = table_info['n_col']
-
-        # optional info
+        # chart info
         chart_format = chart_info.get('chart_format')
         chart_mode = chart_info.get('chart_mode')
 
         # request list
         requests = []
-
         # update chart format
         if chart_format:
             if chart_mode == 'update':
@@ -112,9 +109,8 @@ class Sheets:
         # read columns from sheet header
         columns = values[0]
         values = values[1:]
-
+        log.info(f'values = {values}')
         log.info(f'columns = {columns}')
-
         dto_map[sid] = []
         if not values:
             print('No data found.')
@@ -131,11 +127,13 @@ class Sheets:
                 i = 0
                 dto = {}
                 for col in columns:
-                    dto[col.upper().strip()] = row[i]
+                    dto[col.strip().upper()] = row[i]
                     i += 1
                 dto_map[sid].append(dto)
         except HttpError as err:
             log.info(f'read cell = {err}')
+        finally:
+            print(f'dto_map={dto_map}')
         return result
 
     def clear_cells(self, sid, table_range):

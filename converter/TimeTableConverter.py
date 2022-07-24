@@ -1,5 +1,5 @@
 from converter.model.Converter import Converter
-from domain.factory.table import Columns
+from domain.factory import Columns
 from request.request_form.sheet.table.BasicFormat import BasicFormat
 
 
@@ -22,7 +22,7 @@ class TimeTableConverter(Converter):
                 print(f'result={result}')
 
             header = []
-            for col in Columns.time_table():
+            for col in Columns.docs_table():
                 header.append(col)
             table = [header]
             for row in result:
